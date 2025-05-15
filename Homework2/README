@@ -1,0 +1,2 @@
+# Design Rationale
+    This design was meant to explore the data on Pokemon types and attributes associated with them. The main view was a combo of a bar and line chart, allowing to compare different Pokemon types to the heights and weights. By selecting one of the types, we can use our other graphs to find out more information like average attack, defense, etc. 

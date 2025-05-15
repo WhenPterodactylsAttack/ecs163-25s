@@ -73,10 +73,6 @@ d3.csv("Data/pokemon_alopez247.csv").then(data => {
     // Sort by avgWeight descending for nicer display
     typeStats.sort((a, b) => b.avgWeight - a.avgWeight);
 
-
-
-
-
     // Add a title text element for selected type (initially empty)
     const selectedTypeText = comboSvg.append("text")
         .attr("class", "selected-type-label")
@@ -130,8 +126,6 @@ d3.csv("Data/pokemon_alopez247.csv").then(data => {
         // update the selected type label text
         selectedTypeText.text(`Selected type: ${d.type}`);
     });
-
-
 
     // Line for avgHeight
     const line = d3.line()
@@ -391,7 +385,6 @@ d3.csv("Data/pokemon_alopez247.csv").then(data => {
         .append("path")
         .attr("d", path);
     }
-
 
     // Initialize star chart with first type by default
     if (typeStats.length) {
