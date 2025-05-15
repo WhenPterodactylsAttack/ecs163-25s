@@ -1,4 +1,4 @@
-d3.csv("pokemon_alopez247.csv").then(data => {
+d3.csv("Data/pokemon_alopez247.csv").then(data => {
     // Convert numeric fields
     data.forEach(d => {
     d.Weight_kg = +d.Weight_kg;
