@@ -312,8 +312,8 @@ d3.csv("Data/pokemon_alopez247.csv").then(data => {
                 .attr("stroke", "grey")
                 .attr("stroke-width", 1);
 
-            const minVal = d3.min(filtered, d => d[trait]) / zoomLevel;
-            const maxVal = d3.max(filtered, d => d[trait]) / zoomLevel;
+            const minVal = d3.min(filtered, d => d[trait]) * zoomLevel;
+            const maxVal = d3.max(filtered, d => d[trait]) * zoomLevel;
 
             gStar.append("text")
                 .attr("x", x * 1.1)
