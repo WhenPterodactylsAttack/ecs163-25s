@@ -12,7 +12,7 @@ d3.csv("Data/pokemon_alopez247.csv").then(data => {
     });
         // Setup combo chart dimensions and SVG
     const comboSvg = d3.select("#combo-chart");
-    const margin = { top: 40, right: 50, bottom: 100, left: 70 };
+    const margin = { top: 40, right: 60, bottom: 100, left: 50 };
     const width = comboSvg.node().clientWidth - margin.left - margin.right;
     const height = comboSvg.node().clientHeight - margin.top - margin.bottom;
     comboSvg.selectAll("*").remove();
@@ -150,15 +150,15 @@ d3.csv("Data/pokemon_alopez247.csv").then(data => {
         .attr("r", 4)
         .attr("fill", "black");
 
-g.append("g")
-    .attr("class", "x-axis")
-    .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(x))
-    .selectAll("text")
-    .attr("transform", "rotate(-40)")
-    .attr("text-anchor", "end")
-    .attr("dx", "-0.6em")
-    .attr("dy", "0.15em");
+    g.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x))
+        .selectAll("text")
+        .attr("transform", "rotate(-40)")
+        .attr("text-anchor", "end")
+        .attr("dx", "-0.6em")
+        .attr("dy", "0.15em");
 
 
     // X Axis Label
@@ -206,119 +206,163 @@ g.append("g")
         .style("font-size", "16px")
         .style("font-weight", "bold")
 
+ // Zoom Slider
+    const zoomScale = d3.scaleLinear().domain([1, 5]).range([1, 5]);
+    const slider = d3.select("#combo-chart")
+        .append("input")
+        .attr("type", "range")
+        .attr("min", 1).attr("max", 5).attr("step", 0.1).attr("value", 1)
+        .style("width", "300px").style("margin", "10px");
+
+    slider.on("input", function() {
+        const zoomFactor = +this.value;
+        const newX = d3.scaleBand()
+            .domain(typeStats.map(d => d.type))
+            .range([0, width * zoomFactor])
+            .padding(0.2);
+
+        x.domain(typeStats.map(d => d.type));
+        x.range([0, width * zoomFactor]);
+
+        g.attr("transform", `translate(${margin.left},${margin.top}) scale(${zoomFactor}, 1)`);
+
+        g.selectAll(".bar")
+            .attr("x", d => newX(d.type))
+            .attr("width", newX.bandwidth());
+
+        const updatedLine = d3.line()
+            .x(d => newX(d.type) + newX.bandwidth()/2)
+            .y(d => yRight(d.avgHeight));
+
+        g.select("path").attr("d", updatedLine(typeStats));
+        g.selectAll(".height-point")
+            .attr("cx", d => newX(d.type) + newX.bandwidth()/2);
+
+        g.select(".x-axis")
+            .call(d3.axisBottom(newX))
+            .selectAll("text")
+            .attr("transform", "rotate(-40)")
+            .attr("text-anchor", "end")
+            .attr("dx", "-0.6em")
+            .attr("dy", "0.15em");
+    });
+
+
     // --- Star Chart stub ---
 
-    function updateStarChart(type) {
-        // Filter Pokémon of this type
-        const filtered = data.filter(d => d.Type_1 === type);
+function updateStarChart(type) {
+    const zoomSlider = document.getElementById("zoomSlider");
+    renderStarChart(type, parseFloat(zoomSlider.value));
 
-        // Compute averages of traits for this type
-        const avgStats = {
-            HP: d3.mean(filtered, d => d.HP),
-            Attack: d3.mean(filtered, d => d.Attack),
-            Defense: d3.mean(filtered, d => d.Defense),
-            Sp_Atk: d3.mean(filtered, d => d.Sp_Atk),
-            Sp_Def: d3.mean(filtered, d => d.Sp_Def),
+    zoomSlider.oninput = () => {
+        renderStarChart(type, parseFloat(zoomSlider.value));
+    };
+}
+
+function renderStarChart(type, zoomLevel) {
+    const filtered = data.filter(d => d.Type_1 === type);
+
+    const avgStats = {
+        HP: d3.mean(filtered, d => d.HP),
+        Attack: d3.mean(filtered, d => d.Attack),
+        Defense: d3.mean(filtered, d => d.Defense),
+        Sp_Atk: d3.mean(filtered, d => d.Sp_Atk),
+        Sp_Def: d3.mean(filtered, d => d.Sp_Def),
         Speed: d3.mean(filtered, d => d.Speed)
     };
 
-    // Clear star chart SVG
     const starSvg = d3.select("#star-chart svg");
     starSvg.selectAll("*").remove();
 
     const starWidth = starSvg.node().clientWidth;
     const starHeight = starSvg.node().clientHeight;
-    const margin = 40;
+    const margin = 30;
     const radius = Math.min(starWidth, starHeight) / 2 - margin;
 
     const gStar = starSvg.append("g")
         .attr("transform", `translate(${starWidth / 2},${starHeight / 2})`);
 
-    // Traits and scales
     const traits = Object.keys(avgStats);
-    const maxStat = 150; // max for scale (adjust as needed)
+    const maxStat = 150;
     const angleSlice = (2 * Math.PI) / traits.length;
 
     const rScale = d3.scaleLinear()
         .domain([0, maxStat])
         .range([0, radius]);
 
-    // Draw circular grid lines
     const levels = 5;
-    for(let level = 1; level <= levels; level++) {
-    const r = radius / levels * level;
-    gStar.append("circle")
-        .attr("r", r)
-        .attr("fill", "none")
-        .attr("stroke", "#ccc");
+    for (let level = 1; level <= levels; level++) {
+        const r = radius / levels * level;
+        gStar.append("circle")
+            .attr("r", r)
+            .attr("fill", "none")
+            .attr("stroke", "#ccc");
     }
 
     traits.forEach((trait, i) => {
-    const angle = i * angleSlice - Math.PI / 2;
-    const x = rScale(maxStat) * Math.cos(angle);
-    const y = rScale(maxStat) * Math.sin(angle);
+        const angle = i * angleSlice - Math.PI / 2;
+        const x = rScale(maxStat) * Math.cos(angle);
+        const y = rScale(maxStat) * Math.sin(angle);
 
-    // Axis line
-    gStar.append("line")
-        .attr("x1", 0)
-        .attr("y1", 0)
-        .attr("x2", x)
-        .attr("y2", y)
-        .attr("stroke", "grey")
-        .attr("stroke-width", 1);
+        gStar.append("line")
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", x)
+            .attr("y2", y)
+            .attr("stroke", "grey")
+            .attr("stroke-width", 1);
 
-    // Calculate min and max for this trait among filtered Pokémon
-    const minVal = d3.min(filtered, d => d[trait]);
-    const maxVal = d3.max(filtered, d => d[trait]);
+        const minVal = d3.min(filtered, d => d[trait]) / zoomLevel;
+        const maxVal = d3.max(filtered, d => d[trait]) / zoomLevel;
 
-    // Label trait name at axis end
-    gStar.append("text")
-        .attr("x", x * 1.1)
-        .attr("y", y * 1.1)
-        .attr("text-anchor", "middle")
-        .attr("dominant-baseline", "middle")
-        .style("font-size", "11px")
-        .style("font-weight", "bold")
-        .text(trait);
+        gStar.append("text")
+            .attr("x", x * 1.1)
+            .attr("y", y * 1.1)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .style("font-size", "11px")
+            .style("font-weight", "bold")
+            .text(trait);
 
-    // Label min value slightly inside near origin
-    gStar.append("text")
-        .attr("x", x * 0.15)
-        .attr("y", y * 0.15)
-        .attr("text-anchor", "middle")
-        .attr("dominant-baseline", "middle")
-        .style("font-size", "9px")
-        .style("fill", "gray")
-        .text(minVal.toFixed(0));
+        gStar.append("text")
+            .attr("x", x * 0.15)
+            .attr("y", y * 0.15)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .style("font-size", "9px")
+            .style("fill", "gray")
+            .text(minVal.toFixed(0));
 
-    // Label max value at axis end
-    gStar.append("text")
-        .attr("x", x * 1.3)
-        .attr("y", y * 1.3)
-        .attr("text-anchor", "middle")
-        .attr("dominant-baseline", "middle")
-        .style("font-size", "9px")
-        .style("fill", "gray")
-        .text(maxVal.toFixed(0));
+        gStar.append("text")
+            .attr("x", x * 1.3)
+            .attr("y", y * 1.3)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .style("font-size", "9px")
+            .style("fill", "gray")
+            .text(maxVal.toFixed(0));
     });
 
-    // Build data points for polygon
     const linePoints = traits.map((trait, i) => {
-    const angle = i * angleSlice - Math.PI / 2;
-    return [
-        rScale(avgStats[trait]) * Math.cos(angle),
-        rScale(avgStats[trait]) * Math.sin(angle)
-    ];
+        const angle = i * angleSlice - Math.PI / 2;
+        const value = rScale(avgStats[trait]) / zoomLevel;
+        return [
+            value * Math.cos(angle),
+            value * Math.sin(angle)
+        ];
     });
 
-    // Draw filled polygon
     gStar.append("polygon")
         .attr("points", linePoints.map(d => d.join(",")).join(" "))
         .attr("stroke", "steelblue")
         .attr("stroke-width", 2)
         .attr("fill", "steelblue")
         .attr("fill-opacity", 0.5);
-    }
+}
+
+
+
+
 
     function updateParallelCoords(selectedType) {
         const pcSvg = d3.select("#sankey-chart svg"); // reuse the sankey SVG container
