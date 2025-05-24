@@ -1,0 +1,47 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: sans-serif;
+  background: #f9f9f9;
+}
+
+#dashboard {
+  display: flex;
+  height: 100vh;
+}
+
+#left-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 10px;
+}
+
+#star-chart,
+#sankey-chart {
+  flex: 1;
+  border: 1px solid #ccc;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+#star-chart svg,
+#sankey-chart svg {
+  flex: 1;
+  width: 100%;
+}
+
+#right-panel {
+  flex: 1;
+  border-left: 1px solid #ccc;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+#combo-chart {
+  flex: 1;
+  width: 100%;
+}
